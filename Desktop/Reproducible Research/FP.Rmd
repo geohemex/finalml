@@ -1,0 +1,89 @@
+#Peer Assigment 1 RR
+##Load the data
+```{r, echo=TRUE}
+data<-read.csv('activity.csv', stringsAsFactors = FALSE )
+```
+
+##Process the data
+
+```{r, echo=TRUE, eval=FALSE}
+data$day<-weekdays(as.POSIXlt(data$date, "%Y-%m-%d"))
+```
+
+#What is mean total number of steps taken per day?
+## Calculate the total number of steps taken per day
+
+```{r, echo=TRUE}
+steps_day<-aggregate(steps ~ date, data=data, sum, na.rm=T)
+head(steps_day)
+
+```
+##Make a histogram of the total number of steps taken each day
+```{r, echo=TRUE}
+hist(steps_day$steps, main="Total Steps", xlab="Days")
+```
+
+##Calculate and report the mean and median of the total number of steps taken per day
+
+```{R, echo=TRUE}
+mean(steps_day$steps)
+median(steps_day$steps)
+```
+#What is the average daily activity pattern?
+##Make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{R, echo=TRUE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+
+steps_day<-summarise(group_by(data, interval), mean=mean(steps, na.rm=T))
+g<-ggplot(steps_day, aes(interval,mean))
+g+geom_line()
+```
+##Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r, echo=TRUE}
+which.max(steps_day$mean)
+
+```
+#Imputing missing values
+##Calculate and report the total number of missing values in the dataset 
+```{r, echo=TRUE}
+sum(is.na(data$steps))
+
+```
+##Devise a strategy for filling in all of the missing values in the dataset. 
+```{r, echo=TRUE}
+
+#The strategy consists in replacing NA by mean
+na <- which(is.na(data$steps))
+new<- rep(mean(data$steps, na.rm=TRUE), times=length(na))
+#Create a new dataset that is equal to the original dataset but with the missing data filled in.
+data[na, "steps"] <- new
+```
+##Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day.
+```{r, echo=TRUE}
+steps_day_2<-summarise(group_by(data, date), total=sum(steps))
+hist(steps_day_2$total, main="Total Steps", xlab="Days")
+```
+
+#Are there differences in activity patterns between weekdays and weekends?
+##Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+
+```{r, echo=TRUE, warning=FALSE}
+data$day<-weekdays(as.POSIXlt(data$date, "%Y-%m-%d"))
+data_4<-mutate(data, day_week=ifelse(day=="domingo", "weekend","weekday" ))
+# In Spanish: domingo=Sunday
+steps_day_2<-summarise(group_by(data_4, interval, day_week), mean=mean(steps))
+g<-ggplot(steps_day_2, aes(interval, mean))  + geom_line()
+g+facet_grid(day_week ~ .)
+```
+
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
